@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rod Along Box Borders</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #f0f0f0;
+      }
+
+      .box {
+        width: 50vw;
+        height: 50vw;
+        border: 4px solid #333;
+        position: relative;
+        background-color: white;
+      }
+
+      .rod {
+        width: 80px;
+        height: 10px;
+        background-color: crimson;
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: center;
+        animation: moveAlongBorder 8s linear infinite, spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes moveAlongBorder {
+        0% {
+          top: 30px;
+          left: 0px;
+        }
+        25% {
+          top: 30px;
+          left: calc(100% - 80px);
+        }
+        50% {
+          top: calc(100% - 50px);
+          left: calc(100% - 80px);
+        }
+        75% {
+          top: calc(100% - 50px);
+          left: 0;
+        }
+        100% {
+          top: 50px;
+          left: 0px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <div class="rod"></div>
+    </div>
+  </body>
+</html>
