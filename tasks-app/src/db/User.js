@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,10 +29,30 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.statics.findByCredentials = async function (email, password) {
+  const user = await this.findOne({ email });
+  if (!user) {
+    throw new Error("Invalid login credentials");
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error("Invalid login credentials");
+  }
+
+  return user;
+};
+
+userSchema.methods.generateAuthToken = function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, "ahsdfkjhsdfsbdjfk", {
+    expiresIn: "1h",
+  });
+  return token;
+};
+
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); // Only hash if password is changed
-
+  if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
 

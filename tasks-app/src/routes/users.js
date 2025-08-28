@@ -2,12 +2,12 @@ const express = require("express");
 const User = require("../db/User.js");
 const bcrypt = require("bcryptjs");
 const router = express.Router();
+const auth = require("../middlewares/auth.js");
 
 router.post("/user", async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(req.body);
-    // Basic validation
+
     if (!name || !email || !password) {
       return res.status(400).json({ error: "All fields are required." });
     }
@@ -15,24 +15,30 @@ router.post("/user", async (req, res) => {
     const user = new User({ name, email, password });
     await user.save();
 
-    res.status(201).json({ message: "User created successfully", user });
+    const token = await user.generateAuthToken();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res
+      .status(201)
+      .json({ message: "User created successfully", user: userObj, token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server error creating user" });
   }
 });
 
-router.get("/users", async (req, res) => {
+router.get("/user/me", auth, async (req, res) => {
   try {
-    const users = await User.find(); // fetch all users
-    res.status(200).json(users);
+    res.status(200).json(req.user);
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.get("/users/:id", async (req, res) => {
+router.get("/users/:id", auth, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -47,7 +53,7 @@ router.get("/users/:id", async (req, res) => {
   }
 });
 
-router.patch("/user/:id", async (req, res) => {
+router.patch("/user/:id", auth, async (req, res) => {
   const { id } = req.params;
   const updates = req.body;
 
@@ -78,7 +84,25 @@ router.patch("/user/:id", async (req, res) => {
   }
 });
 
-router.delete("/user/:id", async (req, res) => {
+router.post("/users/login", async (req, res) => {
+  try {
+    const user = await User.findByCredentials(
+      req.body.email,
+      req.body.password
+    );
+
+    const token = await user.generateAuthToken();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.send({ user: userObj, token });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+router.delete("/user/:id", auth, async (req, res) => {
   const { id } = req.params;
 
   try {
